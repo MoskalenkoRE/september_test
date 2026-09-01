@@ -1518,48 +1518,45 @@
     */
 
     function showResult() {
-      let emoji;
-      let title;
-      let description;
+  let emoji;
+  let title;
+  let description;
 
-      if (correctAnswers === 4) {
-        emoji = "🍁";
-        title = "Ты и есть сентябрь";
-        description =
-          "Максимальная готовность. Календарь перевёрнут, плейлист собран, плед ждёт своего часа. Осень может начинаться.";
-      } else if (correctAnswers === 3) {
-        emoji = "☕";
-        title = "Практически готов";
-        description =
-          "Ты уверенно входишь в сентябрь. Осталось проверить прогноз погоды и смириться с тем, что утром уже темновато.";
-      } else if (correctAnswers === 2) {
-        emoji = "🌧️";
-        title = "Сентябрь застал тебя врасплох";
-        description =
-          "Базовая подготовка есть, но жёлтые листья пока вызывают вопросы. Плед, кофе и тематический плейлист исправят ситуацию.";
-      } else {
-        emoji = "☀️";
-        title = "Ты всё ещё мысленно в августе";
-        description =
-          "Сентябрь уже здесь, но ты отказываешься это признавать. Наслаждайся последними тёплыми днями — календарь всё равно придётся перевернуть.";
-      }
+  if (correctAnswers === 4) {
+    emoji = "🍁";
+    title = "Ты и есть сентябрь";
+    description =
+      "Максимальная готовность. Календарь перевёрнут, плейлист собран, плед ждёт своего часа. Осень может начинаться.";
+  } else if (correctAnswers === 3) {
+    emoji = "☕";
+    title = "Практически готов";
+    description =
+      "Ты уверенно входишь в сентябрь. Осталось проверить прогноз погоды и смириться с тем, что утром уже темновато.";
+  } else if (correctAnswers === 2) {
+    emoji = "🌧️";
+    title = "Сентябрь застал тебя врасплох";
+    description =
+      "Базовая подготовка есть, но жёлтые листья пока вызывают вопросы. Плед, кофе и тематический плейлист исправят ситуацию.";
+  } else {
+    emoji = "☀️";
+    title = "Ты всё ещё мысленно в августе";
+    description =
+      "Сентябрь уже здесь, но ты отказываешься это признавать. Наслаждайся последними тёплыми днями — календарь всё равно придётся перевернуть.";
+  }
 
-      resultEmoji.textContent = emoji;
-      resultTitle.textContent = title;
-      resultScore.textContent =
-        `${correctAnswers} / ${questions.length}`;
-      resultDescription.textContent = description;
+  resultEmoji.textContent = emoji;
+  resultTitle.textContent = title;
+  resultScore.textContent =
+    `${correctAnswers} / ${questions.length}`;
+  resultDescription.textContent = description;
 
-      result.classList.add("is-visible");
+  result.classList.add("is-visible");
 
-      window.setTimeout(() => {
-        result.scrollIntoView({
-          behavior: "smooth",
-          block: "center"
-        });
-      }, 450);
-    }
-
+  /*
+    Автоматической прокрутки здесь больше нет.
+    Пользователь сначала увидит картинку последнего ответа.
+  */
+}
     /*
       Перезапуск теста.
     */
