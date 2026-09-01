@@ -874,6 +874,185 @@
         transform: none;
       }
     }
+
+/* МУЗЫКАЛЬНЫЙ ПЛЕЕР */
+
+.mood-player {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 2000;
+
+  width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+
+  color: #f8fafc;
+  background: rgba(13, 17, 23, 0.86);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.mood-player__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 12px;
+
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.mood-player__buttons {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.mood-button {
+  min-height: 40px;
+  padding: 8px 10px;
+
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.mood-button:hover {
+  color: #ffffff;
+  transform: translateY(-2px);
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.mood-button.is-active {
+  color: #211503;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-color: #fbbf24;
+}
+
+.mood-player__controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 12px;
+}
+
+.music-control {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+
+  color: #f8fafc;
+  font-size: 0.9rem;
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+}
+
+.music-control:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.volume-control {
+  width: 100%;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
+
+/* ПЕРЕМОТКА ПЕСНИ */
+
+.mood-player__timeline {
+  display: grid;
+  grid-template-columns: 38px 1fr 38px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+}
+
+.mood-player__time {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mood-player__time:last-child {
+  text-align: right;
+}
+
+.seek-control,
+.volume-control {
+  height: 5px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #f59e0b;
+}
+
+.seek-control {
+  width: 100%;
+}
+
+.volume-icon {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+}
+
+/* Более заметный ползунок в Chrome, Edge и Safari */
+
+.seek-control::-webkit-slider-thumb,
+.volume-control::-webkit-slider-thumb {
+  cursor: grab;
+}
+
+.seek-control::-webkit-slider-thumb:active,
+.volume-control::-webkit-slider-thumb:active {
+  cursor: grabbing;
+}
+
+@media (max-width: 600px) {
+  .mood-player {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .mood-player__title {
+    margin-bottom: 9px;
+  }
+
+  .mood-button {
+    min-height: 38px;
+    padding: 7px 5px;
+  }
+
+  .mood-player__controls {
+    margin-top: 9px;
+  }
+}
+
   </style>
 </head>
 
@@ -1431,5 +1610,303 @@
     });
   </script>
 
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const moodAudio = document.getElementById("moodAudio");
+  const moodButtons = document.querySelectorAll(".mood-button");
+  const musicToggle = document.getElementById("musicToggle");
+  const volumeControl = document.getElementById("volumeControl");
+  const musicStatusIcon = document.getElementById("musicStatusIcon");
+  const musicStatusText = document.getElementById("musicStatusText");
+  const seekControl = document.getElementById("seekControl");
+const currentTimeElement = document.getElementById("currentTime");
+const durationTimeElement = document.getElementById("durationTime");
+  
+/*
+  Когда браузер получил длительность песни.
+*/
+moodAudio.addEventListener("loadedmetadata", () => {
+  if (!Number.isFinite(moodAudio.duration)) {
+    return;
+  }
+
+  seekControl.max = moodAudio.duration;
+  durationTimeElement.textContent = formatTime(moodAudio.duration);
+});
+
+/*
+  Обновляем ползунок во время воспроизведения.
+*/
+moodAudio.addEventListener("timeupdate", () => {
+  if (!Number.isFinite(moodAudio.currentTime)) {
+    return;
+  }
+
+  seekControl.value = moodAudio.currentTime;
+  currentTimeElement.textContent = formatTime(moodAudio.currentTime);
+});
+
+/*
+  Перематываем песню при движении ползунка.
+*/
+seekControl.addEventListener("input", () => {
+  const newTime = Number(seekControl.value);
+
+  if (!Number.isFinite(newTime)) {
+    return;
+  }
+
+  moodAudio.currentTime = newTime;
+  currentTimeElement.textContent = formatTime(newTime);
+});
+
+/*
+  Сбрасываем таймлайн при загрузке нового трека.
+*/
+moodAudio.addEventListener("loadstart", () => {
+  seekControl.value = 0;
+  currentTimeElement.textContent = "0:00";
+  durationTimeElement.textContent = "0:00";
+});
+
+/*
+  Преобразует секунды в формат 3:07.
+*/
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) {
+    return "0:00";
+  }
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, "0");
+
+  return `${minutes}:${remainingSeconds}`;
+}
+
+  /*
+    Проверяем, что все элементы плеера существуют.
+  */
+  if (
+    !moodAudio ||
+    !moodButtons.length ||
+    !musicToggle ||
+    !volumeControl ||
+    !musicStatusIcon ||
+    !musicStatusText
+  ) {
+    console.error(
+      "Музыкальный плеер не запущен: один или несколько элементов не найдены."
+    );
+    return;
+  }
+
+  let activeMoodButton = null;
+
+  moodAudio.volume = Number(volumeControl.value);
+
+  moodButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+      const track = button.dataset.track;
+      const title = button.dataset.title;
+
+      /*
+        Повторное нажатие на активный муд:
+        пауза или продолжение.
+      */
+      if (activeMoodButton === button) {
+        if (moodAudio.paused) {
+          await playMusic();
+        } else {
+          pauseMusic();
+        }
+
+        return;
+      }
+
+      /*
+        Переключаемся на новый трек.
+      */
+      moodButtons.forEach((item) => {
+        item.classList.remove("is-active");
+      });
+
+      button.classList.add("is-active");
+      activeMoodButton = button;
+
+      moodAudio.pause();
+      moodAudio.src = track;
+      moodAudio.load();
+
+      musicStatusText.textContent = `${title} — загрузка…`;
+      musicStatusIcon.textContent = "⏳";
+      musicToggle.disabled = false;
+
+      await playMusic();
+    });
+  });
+
+  musicToggle.addEventListener("click", async () => {
+    if (!moodAudio.getAttribute("src")) {
+      return;
+    }
+
+    if (moodAudio.paused) {
+      await playMusic();
+    } else {
+      pauseMusic();
+    }
+  });
+
+  volumeControl.addEventListener("input", () => {
+    moodAudio.volume = Number(volumeControl.value);
+  });
+
+  /*
+    События аудиоплеера.
+  */
+  moodAudio.addEventListener("playing", () => {
+    musicToggle.textContent = "❚❚";
+    musicStatusIcon.textContent = "🎵";
+
+    if (activeMoodButton) {
+      musicStatusText.textContent =
+        activeMoodButton.dataset.title;
+    }
+  });
+
+  moodAudio.addEventListener("waiting", () => {
+    musicStatusIcon.textContent = "⏳";
+  });
+
+  moodAudio.addEventListener("error", () => {
+    musicToggle.textContent = "▶";
+    musicStatusIcon.textContent = "⚠️";
+    musicStatusText.textContent = "Файл не найден или формат не поддерживается";
+
+    console.error(
+      "Ошибка загрузки аудио:",
+      moodAudio.currentSrc || moodAudio.src,
+      moodAudio.error
+    );
+  });
+
+  async function playMusic() {
+    try {
+      await moodAudio.play();
+
+      musicToggle.textContent = "❚❚";
+      musicStatusIcon.textContent = "🎵";
+
+      if (activeMoodButton) {
+        musicStatusText.textContent =
+          activeMoodButton.dataset.title;
+      }
+    } catch (error) {
+      musicToggle.textContent = "▶";
+      musicStatusIcon.textContent = "⚠️";
+      musicStatusText.textContent = "Не удалось включить";
+
+      console.error("Ошибка воспроизведения:", error);
+    }
+  }
+
+  function pauseMusic() {
+    moodAudio.pause();
+    musicToggle.textContent = "▶";
+    musicStatusIcon.textContent = "🎧";
+
+    if (activeMoodButton) {
+      musicStatusText.textContent =
+        `${activeMoodButton.dataset.title} — пауза`;
+    }
+  }
+});
+</script>
+
 </body>
+
+<div class="mood-player" aria-label="Выбор музыки">
+  <div class="mood-player__title">
+    <span id="musicStatusIcon">🎧</span>
+    <span id="musicStatusText">Выбери осенний муд</span>
+  </div>
+
+  <div class="mood-player__buttons">
+    <button
+      class="mood-button"
+      type="button"
+      data-track="audio/mood-1.mp3"
+      data-title="Муд 1 Stigmata-Сентябрь"
+    >
+      Муд 1
+    </button>
+
+    <button
+      class="mood-button"
+      type="button"
+      data-track="audio/mood-2.mp3"
+      data-title="Муд 2 ДДТ-Что такое осень"
+    >
+      Муд 2
+    </button>
+
+    <button
+      class="mood-button"
+      type="button"
+      data-track="audio/mood-3.mp3"
+      data-title="Муд 3 М. Шуфутинский-3 Сентября"
+    >
+      Муд 3
+    </button>
+  </div>
+
+<div class="mood-player__timeline">
+  <span class="mood-player__time" id="currentTime">0:00</span>
+
+  <input
+    class="seek-control"
+    id="seekControl"
+    type="range"
+    min="0"
+    max="100"
+    step="0.1"
+    value="0"
+    aria-label="Перемотка песни"
+  >
+
+  <span class="mood-player__time" id="durationTime">0:00</span>
+</div>
+
+<div class="mood-player__controls">
+  <button
+    class="music-control"
+    id="musicToggle"
+    type="button"
+    aria-label="Пауза или продолжение"
+    disabled
+  >
+    ▶
+  </button>
+
+  <span class="volume-icon" aria-hidden="true">🔊</span>
+
+  <input
+    class="volume-control"
+    id="volumeControl"
+    type="range"
+    min="0"
+    max="1"
+    step="0.05"
+    value="0.6"
+    aria-label="Громкость музыки"
+  >
+</div>
+
+<audio id="moodAudio" loop preload="metadata"></audio>
+
+  <audio id="moodAudio" loop preload="none"></audio>
+</div>
+
 </html>
